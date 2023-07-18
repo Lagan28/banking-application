@@ -2,9 +2,15 @@
 #include <fstream>
 #include <regex>
 #include <vector>
+#include <ctime>
+#include <chrono>
+#include <windows.h>
+#include<unistd.h>
 
 using namespace std;
+using namespace std::chrono;
 
+//Account Class
 class Account
 {
 private:
@@ -65,6 +71,7 @@ class Bank
 private:
     vector<Account *> accounts;
     const double loanInterestRate = 5.0;
+    string selectedAccountNumber;
 
 public:
     ~Bank()
@@ -74,6 +81,9 @@ public:
             delete account;
         }
     }
+
+    void selectedAccount();
+    string getSelectedAccountNumber() const;
 
     void openAccount()
     {
@@ -114,9 +124,7 @@ public:
 
     void closeAccount()
     {
-        string accountNumber;
-        cout << "Enter account number: ";
-        cin >> accountNumber;
+        string accountNumber = selectedAccountNumber;
 
         for (auto it = accounts.begin(); it != accounts.end(); ++it)
         {
@@ -134,8 +142,10 @@ public:
 
     void transferAmount()
     {
-        string senderAccountNumber, receiverAccountNumber;
+        string receiverAccountNumber;
         double amount;
+
+        string senderAccountNumber = selectedAccountNumber;
 
         cout << "Enter sender account number: ";
         cin >> senderAccountNumber;
@@ -190,9 +200,8 @@ public:
 
     void checkBalance()
     {
-        string accountNumber;
-        cout << "Enter account number: ";
-        cin >> accountNumber;
+        string accountNumber = selectedAccountNumber;
+        cout<<"The current account number is : " <<accountNumber<<endl;
 
         for (const auto &account : accounts)
         {
@@ -208,11 +217,8 @@ public:
 
     void withdrawAmount()
     {
-        string accountNumber;
+        string accountNumber = selectedAccountNumber;
         double amount;
-
-        cout << "Enter account number: ";
-        cin >> accountNumber;
 
         for (const auto &account : accounts)
         {
@@ -232,11 +238,8 @@ public:
 
     void grantLoan()
     {
-        string accountNumber;
+        string accountNumber = selectedAccountNumber;
         double loanAmount, timePeriod;
-
-        cout << "Enter account number: ";
-        cin >> accountNumber;
 
         Account *account = nullptr;
 
@@ -272,33 +275,33 @@ public:
 
     void getPrintPassbook()
     {
-        string accountNumber;
-        cout << "Enter account number: ";
-        cin >> accountNumber;
+        string accountNumber = selectedAccountNumber;
 
         ifstream passbookFile(accountNumber + ".txt");
         ofstream passbook;
 
-        if (!passbookFile)
-        {
-            // Passbook file doesn't exist, create a new one
-            passbook.open(accountNumber + ".txt");
-            passbook << "Passbook for Account Number: " << accountNumber << endl;
-        }
-        else
-        {
-            // Passbook file exists, append to existing file
-            passbook.open(accountNumber + ".txt", ios::app);
-        }
+        // if (!passbookFile)
+        // {
+        //     // Passbook file doesn't exist, create a new one
+        //     passbook.open(accountNumber + ".txt");
+        //     passbook << "Passbook for Account Number: " << accountNumber << endl;
+        // }
+        // else
+        // {
+        //     // Passbook file exists, append to existing file
+        //     passbook.open(accountNumber + ".txt", ios::app);
+        // }
+
+        passbook.open(accountNumber + ".txt");
 
         if (!passbook)
         {
             throw "Error in accessing the passbook";
         }
 
-        // Get current time
-        // auto currentTime = system_clock::to_time_t(system_clock::now());
-        // passbook << "\n----- Updated on: " << ctime(&currentTime);
+        //Get current time
+        auto currentTime = system_clock::to_time_t(system_clock::now());
+        passbook << "\n----- Updated on: " << ctime(&currentTime);
 
         string line;
         while (getline(passbookFile, line))
@@ -336,16 +339,29 @@ public:
     }
 };
 
+void Bank::selectedAccount(){
+    cout<<"Enter the account number: ";
+    cin >> selectedAccountNumber;
+    cout<<"Account "<<selectedAccountNumber<<" selected."<<endl;
+}
+
+string Bank::getSelectedAccountNumber() const{
+    return selectedAccountNumber;
+}
+
 void displayMainMenu()
 {
-    cout << "\nMain Menu" << endl;
+    cout << "Welcome to the BANK. Choose the service you want!" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "Main Menu" << endl;
     cout << "1. Open Account" << endl;
     cout << "2. Close Account" << endl;
     cout << "3. Transfer Amount" << endl;
-    cout << "4. Check Balance" << endl;
+    cout << "4. Account Details" << endl;
     cout << "5. Withdraw Amount" << endl;
     cout << "6. Grant Loan" << endl;
     cout << "7. Print Passbook" << endl;
+    cout << "8. Change account number" << endl;
     cout << "0. Exit" << endl;
     cout << "Enter your choice: ";
 }
@@ -355,8 +371,9 @@ int main()
     Bank bank;
     int choice;
 
-    cout << "Welcome to XYZ Bank" << endl;
-    cout << "===================" << endl;
+    cout << "-------------------" << endl;
+    cout << "Welcome to the Bank" << endl;
+    cout << "-------------------" << endl;
 
     string username, password;
     bool isLoggedIn = false;
@@ -386,6 +403,8 @@ int main()
         return 0;
     }
 
+    system("cls");
+
     // Login
     cout << "Login" << endl;
 
@@ -403,6 +422,7 @@ int main()
         {
             cout << "Login successful!" << endl;
             isLoggedIn = true;
+            system("cls");
             break;
         }
         else
@@ -415,8 +435,19 @@ int main()
     if (!isLoggedIn)
     {
         cout << "Maximum login attempts reached. Exiting..." << endl;
+        sleep(3);
         return 0;
     }
+
+    cout<<"First time user? Create an account!"<<endl;
+    try{
+        bank.openAccount();
+    }catch(const char *e){
+        cout << "Error " << e << endl;
+        return 0;
+    }
+
+    bank.selectedAccount();
 
     while (true)
     {
@@ -448,8 +479,11 @@ int main()
             case 7:
                 bank.getPrintPassbook();
                 break;
+            case 8:
+                bank.selectedAccount();
+                break;
             case 0:
-                cout << "Thank you for using XYZ Bank. Goodbye!" << endl;
+                cout << "Thank you for using the Bank. Goodbye!" << endl;
                 return 0;
             default:
                 cout << "Invalid choice. Please try again." << endl;
