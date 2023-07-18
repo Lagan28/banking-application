@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <regex>
+#include <vector>
 
 using namespace std;
 
@@ -10,6 +11,7 @@ private:
     string accountNumber;
     string accountHolderName;
     double balance;
+    double initialBalance;
 
 public:
     Account(string number, string name, double initialBalance)
@@ -17,6 +19,7 @@ public:
         accountNumber = number;
         accountHolderName = name;
         balance = initialBalance;
+        this->initialBalance = initialBalance;
     }
 
     string getAccountNumber() const
@@ -50,29 +53,26 @@ public:
             throw "Insufficient balance";
         }
     }
+
+    double getInitialBalance() const
+    {
+        return initialBalance;
+    }
 };
 
 class Bank
 {
 private:
-    Account **accounts;
-    int numAccounts;
+    vector<Account *> accounts;
     const double loanInterestRate = 5.0;
 
 public:
-    Bank()
-    {
-        accounts = nullptr;
-        numAccounts = 0;
-    }
-
     ~Bank()
     {
-        for (int i = 0; i < numAccounts; i++)
+        for (auto account : accounts)
         {
-            delete accounts[i];
+            delete account;
         }
-        delete[] accounts;
     }
 
     void openAccount()
@@ -91,9 +91,9 @@ public:
         }
 
         // Check if the account number already exists
-        for (int i = 0; i < numAccounts; i++)
+        for (const auto &account : accounts)
         {
-            if (accounts[i]->getAccountNumber() == accountNumber)
+            if (account->getAccountNumber() == accountNumber)
             {
                 throw "Account number already exists";
             }
@@ -107,18 +107,7 @@ public:
         cin >> initialBalance;
 
         Account *account = new Account(accountNumber, accountHolderName, initialBalance);
-
-        Account **temp = new Account *[numAccounts + 1];
-        for (int i = 0; i < numAccounts; i++)
-        {
-            temp[i] = accounts[i];
-        }
-
-        temp[numAccounts] = account;
-
-        delete[] accounts;
-        accounts = temp;
-        numAccounts++;
+        accounts.push_back(account);
 
         cout << "Account created successfully!" << endl;
     }
@@ -129,46 +118,13 @@ public:
         cout << "Enter account number: ";
         cin >> accountNumber;
 
-        for (int i = 0; i < numAccounts; i++)
+        for (auto it = accounts.begin(); it != accounts.end(); ++it)
         {
-            if (accounts[i]->getAccountNumber() == accountNumber)
+            if ((*it)->getAccountNumber() == accountNumber)
             {
-                delete accounts[i];
-                numAccounts--;
-
-                Account **temp = new Account *[numAccounts];
-                for (int j = 0, k = 0; j < numAccounts + 1; j++)
-                {
-                    if (j != i)
-                    {
-                        temp[k++] = accounts[j];
-                    }
-                }
-
-                delete[] accounts;
-                accounts = temp;
-
+                delete *it;
+                accounts.erase(it);
                 cout << "Account closed successfully!" << endl;
-                return;
-            }
-        }
-
-        throw "Account not found";
-    }
-
-    void displayAccountInfo()
-    {
-        string accountNumber;
-        cout << "Enter account number: ";
-        cin >> accountNumber;
-
-        for (int i = 0; i < numAccounts; i++)
-        {
-            if (accounts[i]->getAccountNumber() == accountNumber)
-            {
-                cout << "Account Number: " << accounts[i]->getAccountNumber() << endl;
-                cout << "Account Holder Name: " << accounts[i]->getAccountHolderName() << endl;
-                cout << "Balance: " << accounts[i]->getBalance() << endl;
                 return;
             }
         }
@@ -187,36 +143,49 @@ public:
         cout << "Enter receiver account number: ";
         cin >> receiverAccountNumber;
 
-        for (int i = 0; i < numAccounts; i++)
+        Account *sender = nullptr;
+        Account *receiver = nullptr;
+
+        for (const auto &account : accounts)
         {
-            if (accounts[i]->getAccountNumber() == senderAccountNumber)
+            if (account->getAccountNumber() == senderAccountNumber)
             {
-                for (int j = 0; j < numAccounts; j++)
-                {
-                    if (accounts[j]->getAccountNumber() == receiverAccountNumber)
-                    {
-                        cout << "Enter amount to transfer: ";
-                        cin >> amount;
+                sender = account;
+            }
+            else if (account->getAccountNumber() == receiverAccountNumber)
+            {
+                receiver = account;
+            }
 
-                        if (accounts[i]->getBalance() >= amount)
-                        {
-                            accounts[i]->withdraw(amount);
-                            accounts[j]->deposit(amount);
-                            cout << "Amount transferred successfully!" << endl;
-                            return;
-                        }
-                        else
-                        {
-                            throw "Insufficient balance";
-                        }
-                    }
-                }
-
-                throw "Receiver account not found";
+            if (sender && receiver)
+            {
+                break;
             }
         }
 
-        throw "Sender account not found";
+        if (!sender)
+        {
+            throw "Sender account not found";
+        }
+
+        if (!receiver)
+        {
+            throw "Receiver account not found";
+        }
+
+        cout << "Enter amount to transfer: ";
+        cin >> amount;
+
+        if (sender->getBalance() >= amount)
+        {
+            sender->withdraw(amount);
+            receiver->deposit(amount);
+            cout << "Amount transferred successfully!" << endl;
+        }
+        else
+        {
+            throw "Insufficient balance";
+        }
     }
 
     void checkBalance()
@@ -225,11 +194,11 @@ public:
         cout << "Enter account number: ";
         cin >> accountNumber;
 
-        for (int i = 0; i < numAccounts; i++)
+        for (const auto &account : accounts)
         {
-            if (accounts[i]->getAccountNumber() == accountNumber)
+            if (account->getAccountNumber() == accountNumber)
             {
-                cout << "Balance: " << accounts[i]->getBalance() << endl;
+                cout << "Balance: " << account->getBalance() << endl;
                 return;
             }
         }
@@ -245,14 +214,14 @@ public:
         cout << "Enter account number: ";
         cin >> accountNumber;
 
-        for (int i = 0; i < numAccounts; i++)
+        for (const auto &account : accounts)
         {
-            if (accounts[i]->getAccountNumber() == accountNumber)
+            if (account->getAccountNumber() == accountNumber)
             {
                 cout << "Enter amount to withdraw: ";
                 cin >> amount;
 
-                accounts[i]->withdraw(amount);
+                account->withdraw(amount);
                 cout << "Amount withdrawn successfully!" << endl;
                 return;
             }
@@ -269,90 +238,132 @@ public:
         cout << "Enter account number: ";
         cin >> accountNumber;
 
-        for (int i = 0; i < numAccounts; i++)
+        Account *account = nullptr;
+
+        for (const auto &acc : accounts)
         {
-            if (accounts[i]->getAccountNumber() == accountNumber)
+            if (acc->getAccountNumber() == accountNumber)
             {
-                cout << "Enter loan amount: ";
-                cin >> loanAmount;
-
-                cout << "Enter time period (in years): ";
-                cin >> timePeriod;
-
-                double interest = loanAmount * loanInterestRate * timePeriod / 100;
-                accounts[i]->deposit(loanAmount);
-                cout << "Loan granted successfully!" << endl;
-                cout << "Loan Amount: " << loanAmount << endl;
-                cout << "Interest Rate: " << loanInterestRate << "%" << endl;
-                cout << "Time Period: " << timePeriod << " years" << endl;
-                cout << "Total Repayment Amount: " << loanAmount + interest << endl;
-
-                // Add loan information to passbook
-                ofstream passbook(accountNumber + ".txt", ios::app);
-                passbook << "Loan Granted:" << endl;
-                passbook << "Loan Amount: " << loanAmount << endl;
-                passbook << "Interest Rate: " << loanInterestRate << "%" << endl;
-                passbook << "Time Period: " << timePeriod << " years" << endl;
-                passbook << "Total Repayment Amount: " << loanAmount + interest << endl;
-                passbook.close();
-
-                return;
+                account = acc;
+                break;
             }
         }
 
-        throw "Account not found";
+        if (!account)
+        {
+            throw "Account not found";
+        }
+
+        cout << "Enter loan amount: ";
+        cin >> loanAmount;
+
+        cout << "Enter time period (in years): ";
+        cin >> timePeriod;
+
+        double interest = loanAmount * loanInterestRate * timePeriod / 100;
+        account->deposit(loanAmount);
+
+        cout << "Loan granted successfully!" << endl;
+        cout << "Loan Amount: " << loanAmount << endl;
+        cout << "Interest Rate: " << loanInterestRate << "%" << endl;
+        cout << "Time Period: " << timePeriod << " years" << endl;
+        cout << "Total Repayment Amount: " << loanAmount + interest << endl;
     }
 
-    void printPassbook()
+    void getPrintPassbook()
     {
         string accountNumber;
         cout << "Enter account number: ";
         cin >> accountNumber;
 
-        ifstream passbook(accountNumber + ".txt");
-        if (passbook)
+        ifstream passbookFile(accountNumber + ".txt");
+        ofstream passbook;
+
+        if (!passbookFile)
         {
-            string line;
-            while (getline(passbook, line))
-            {
-                cout << line << endl;
-            }
-            passbook.close();
+            // Passbook file doesn't exist, create a new one
+            passbook.open(accountNumber + ".txt");
+            passbook << "Passbook for Account Number: " << accountNumber << endl;
         }
         else
         {
-            throw "Passbook not found";
+            // Passbook file exists, append to existing file
+            passbook.open(accountNumber + ".txt", ios::app);
         }
+
+        if (!passbook)
+        {
+            throw "Error in accessing the passbook";
+        }
+
+        // Get current time
+        // auto currentTime = system_clock::to_time_t(system_clock::now());
+        // passbook << "\n----- Updated on: " << ctime(&currentTime);
+
+        string line;
+        while (getline(passbookFile, line))
+        {
+            // Display passbook contents from the file
+            passbook << line << endl;
+        }
+
+        passbookFile.close();
+
+        // Retrieve the latest transactions and append them to the passbook
+        for (const auto &account : accounts)
+        {
+            if (account->getAccountNumber() == accountNumber)
+            {
+                passbook << "Account Holder Name: " << account->getAccountHolderName() << endl;
+                passbook << "Account Balance: " << account->getBalance() << endl;
+
+                // Add loan details if granted
+                double loanAmount = account->getBalance() - account->getInitialBalance();
+                if (loanAmount > 0)
+                {
+                    double interest = loanAmount * loanInterestRate / 100;
+                    passbook << "Loan Granted: " << loanAmount << " (Interest Rate: " << loanInterestRate << "%)" << endl;
+                    passbook << "Total Repayment Amount: " << account->getBalance() << endl;
+                }
+
+                // Add more details or transactions as needed
+                break;
+            }
+        }
+
+        passbook.close();
+        cout << "Passbook printed successfully!" << endl;
     }
 };
 
 void displayMainMenu()
 {
-    cout << "=========================" << endl;
-    cout << "Banking Application Menu" << endl;
-    cout << "=========================" << endl;
+    cout << "\nMain Menu" << endl;
     cout << "1. Open Account" << endl;
     cout << "2. Close Account" << endl;
-    cout << "3. Display Account Information" << endl;
-    cout << "4. Transfer Amount" << endl;
-    cout << "5. Check Balance" << endl;
-    cout << "6. Withdraw Amount" << endl;
-    cout << "7. Grant Loan" << endl;
-    cout << "8. Print Passbook" << endl;
+    cout << "3. Transfer Amount" << endl;
+    cout << "4. Check Balance" << endl;
+    cout << "5. Withdraw Amount" << endl;
+    cout << "6. Grant Loan" << endl;
+    cout << "7. Print Passbook" << endl;
     cout << "0. Exit" << endl;
-    cout << "=========================" << endl;
     cout << "Enter your choice: ";
 }
 
 int main()
 {
     Bank bank;
+    int choice;
+
+    cout << "Welcome to XYZ Bank" << endl;
+    cout << "===================" << endl;
+
     string username, password;
+    bool isLoggedIn = false;
+    int loginAttempts = 3;
 
     // Sign-up
-    cout << "Welcome to XYZ Bank" << endl;
     cout << "Sign Up" << endl;
-
     cout << "Enter username: ";
     cin >> username;
 
@@ -379,7 +390,6 @@ int main()
     cout << "Login" << endl;
 
     string enteredUsername, enteredPassword;
-    int loginAttempts = 3;
 
     while (loginAttempts > 0)
     {
@@ -392,6 +402,7 @@ int main()
         if (enteredUsername == username && enteredPassword == password)
         {
             cout << "Login successful!" << endl;
+            isLoggedIn = true;
             break;
         }
         else
@@ -401,13 +412,12 @@ int main()
         }
     }
 
-    if (loginAttempts == 0)
+    if (!isLoggedIn)
     {
         cout << "Maximum login attempts reached. Exiting..." << endl;
         return 0;
     }
 
-    int choice;
     while (true)
     {
         displayMainMenu();
@@ -424,22 +434,19 @@ int main()
                 bank.closeAccount();
                 break;
             case 3:
-                bank.displayAccountInfo();
-                break;
-            case 4:
                 bank.transferAmount();
                 break;
-            case 5:
+            case 4:
                 bank.checkBalance();
                 break;
-            case 6:
+            case 5:
                 bank.withdrawAmount();
                 break;
-            case 7:
+            case 6:
                 bank.grantLoan();
                 break;
-            case 8:
-                bank.printPassbook();
+            case 7:
+                bank.getPrintPassbook();
                 break;
             case 0:
                 cout << "Thank you for using XYZ Bank. Goodbye!" << endl;
@@ -452,6 +459,8 @@ int main()
         {
             cout << "Error: " << e << endl;
         }
+
+        cout << endl;
     }
 
     return 0;
