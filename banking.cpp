@@ -90,7 +90,7 @@ public:
         string accountNumber, accountHolderName;
         double initialBalance;
 
-        cout << "Enter account number: ";
+        cout << "\n\nEnter account number: ";
         cin >> accountNumber;
 
         // Validate account number using regex
@@ -132,7 +132,7 @@ public:
             {
                 delete *it;
                 accounts.erase(it);
-                cout << "Account closed successfully!" << endl;
+                cout << "\n\nAccount closed successfully!" << endl;
                 return;
             }
         }
@@ -147,10 +147,7 @@ public:
 
         string senderAccountNumber = selectedAccountNumber;
 
-        cout << "Enter sender account number: ";
-        cin >> senderAccountNumber;
-
-        cout << "Enter receiver account number: ";
+        cout << "\n\nEnter receiver account number: ";
         cin >> receiverAccountNumber;
 
         Account *sender = nullptr;
@@ -201,7 +198,7 @@ public:
     void checkBalance()
     {
         string accountNumber = selectedAccountNumber;
-        cout<<"The current account number is : " <<accountNumber<<endl;
+        cout<<"\n\nThe current account number is : " <<accountNumber<<endl;
 
         for (const auto &account : accounts)
         {
@@ -224,7 +221,7 @@ public:
         {
             if (account->getAccountNumber() == accountNumber)
             {
-                cout << "Enter amount to withdraw: ";
+                cout << "\n\nEnter amount to withdraw: ";
                 cin >> amount;
 
                 account->withdraw(amount);
@@ -266,7 +263,7 @@ public:
         double interest = loanAmount * loanInterestRate * timePeriod / 100;
         account->deposit(loanAmount);
 
-        cout << "Loan granted successfully!" << endl;
+        cout << "\n\nLoan granted successfully!" << endl;
         cout << "Loan Amount: " << loanAmount << endl;
         cout << "Interest Rate: " << loanInterestRate << "%" << endl;
         cout << "Time Period: " << timePeriod << " years" << endl;
@@ -335,13 +332,27 @@ public:
         }
 
         passbook.close();
-        cout << "Passbook printed successfully!" << endl;
+        cout << "\nPassbook printed successfully!" << endl;
     }
 };
 
 void Bank::selectedAccount(){
-    cout<<"Enter the account number: ";
-    cin >> selectedAccountNumber;
+    bool isValidAccount = false;
+
+    while(!isValidAccount){
+        cout<<"\nEnter the account number: ";
+        cin >> selectedAccountNumber;
+
+        for(const auto&account : accounts){
+            if(account->getAccountNumber() == selectedAccountNumber){
+                isValidAccount = true;
+                break;
+            }
+        }
+        if(!isValidAccount){
+            cout<<"Invalid account number. Try again"<<endl;
+        }
+    }
     cout<<"Account "<<selectedAccountNumber<<" selected."<<endl;
 }
 
@@ -351,7 +362,7 @@ string Bank::getSelectedAccountNumber() const{
 
 void displayMainMenu()
 {
-    cout << "Welcome to the BANK. Choose the service you want!" << endl;
+    cout << "\nWelcome to the BANK. Choose the service you want!" << endl;
     cout << "-------------------------------------------------" << endl;
     cout << "Main Menu" << endl;
     cout << "1. Open Account" << endl;
