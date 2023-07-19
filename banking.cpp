@@ -1,3 +1,4 @@
+//header files
 #include <iostream>
 #include <fstream>
 #include <regex>
@@ -5,7 +6,7 @@
 #include <ctime>
 #include <chrono>
 #include <windows.h>
-#include<unistd.h>
+#include <unistd.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -20,6 +21,7 @@ private:
     double initialBalance;
 
 public:
+    // Account constructor
     Account(string number, string name, double initialBalance)
     {
         accountNumber = number;
@@ -70,10 +72,11 @@ class Bank
 {
 private:
     vector<Account *> accounts;
-    const double loanInterestRate = 5.0;
+    const double loanInterestRate = 6.5;
     string selectedAccountNumber;
 
 public:
+    //bank destructor
     ~Bank()
     {
         for (auto account : accounts)
@@ -82,9 +85,11 @@ public:
         }
     }
 
+    //for changing the account number in the console
     void selectedAccount();
     string getSelectedAccountNumber() const;
 
+    //to open new account
     void openAccount()
     {
         string accountNumber, accountHolderName;
@@ -122,6 +127,7 @@ public:
         cout << "Account created successfully!" << endl;
     }
 
+    //function to close an account
     void closeAccount()
     {
         string accountNumber = selectedAccountNumber;
@@ -140,6 +146,7 @@ public:
         throw "Account not found";
     }
 
+    //function to transfer amount from one coount to another
     void transferAmount()
     {
         string receiverAccountNumber;
@@ -195,6 +202,7 @@ public:
         }
     }
 
+    //function to check the balance in the current selected account
     void checkBalance()
     {
         string accountNumber = selectedAccountNumber;
@@ -212,6 +220,7 @@ public:
         throw "Account not found";
     }
 
+    //function to withdraw amount from the selected account
     void withdrawAmount()
     {
         string accountNumber = selectedAccountNumber;
@@ -233,6 +242,22 @@ public:
         throw "Account not found";
     }
 
+    void depositAmount(){
+        string accountNumber = selectedAccountNumber;
+        double amount;
+        for(const auto &account : accounts){
+            if(account->getAccountNumber() == accountNumber){
+                cout<<"\n\nEnter amount to deposit: ";
+                cin >> amount;
+                account->deposit(amount);
+                cout<<"Amount deposited!"<<endl;
+                return;
+            }
+        }
+        throw "Account not found";
+    }
+
+    //function to grant a loan, show receipt and update the passbook
     void grantLoan()
     {
         string accountNumber = selectedAccountNumber;
@@ -270,6 +295,7 @@ public:
         cout << "Total Repayment Amount: " << loanAmount + interest << endl;
     }
 
+    //function to print a passbook for the current information of the account
     void getPrintPassbook()
     {
         string accountNumber = selectedAccountNumber;
@@ -373,6 +399,7 @@ void displayMainMenu()
     cout << "6. Grant Loan" << endl;
     cout << "7. Print Passbook" << endl;
     cout << "8. Change account number" << endl;
+    cout << "9. Deposit Money" << endl;
     cout << "0. Exit" << endl;
     cout << "Enter your choice: ";
 }
@@ -492,6 +519,9 @@ int main()
                 break;
             case 8:
                 bank.selectedAccount();
+                break;
+            case 9:
+                bank.depositAmount();
                 break;
             case 0:
                 cout << "Thank you for using the Bank. Goodbye!" << endl;
